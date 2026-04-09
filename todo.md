@@ -1,0 +1,29 @@
+# Hermes Agent Mobile — TODO
+
+- [x] 更新主题色为 Nous Research 紫色品牌色
+- [x] 配置 Tab Bar（聊天、历史、设置三个 Tab）
+- [x] 添加 Tab 图标映射（message.fill、clock.fill、gearshape.fill）
+- [x] 实现聊天数据模型（Message、Conversation 类型）
+- [x] 实现本地存储（AsyncStorage）持久化对话历史
+- [x] 实现 Chat Screen 核心 UI（消息列表、输入框、发送按钮）
+- [x] 实现消息气泡组件（用户/AI 区分样式）
+- [x] 实现 Markdown 渲染（支持代码块、粗体、斜体等）
+- [x] 实现流式 AI 回复（SSE/streaming fetch）
+- [x] 实现停止生成功能
+- [x] 实现 Conversations Screen（历史对话列表）
+- [x] 实现新建对话功能
+- [x] 实现删除对话功能
+- [x] 实现 Settings Screen（API Key、Base URL、模型名称配置）
+- [x] 实现 API Key 安全存储（expo-secure-store）
+- [x] 实现 Temperature 和 Max Tokens 配置
+- [x] 实现系统提示词自定义
+- [x] 实现深色/浅色模式切换（跟随系统）
+- [x] 实现首次使用引导（未配置 API Key 时提示）
+- [x] 生成并配置应用图标
+- [x] 更新 app.config.ts 应用名称和品牌信息
+- [x] 实现 Telegram 消息网关配置（Bot Token、Chat ID）
+- [x] 实现 Telegram 消息发送功能（将 AI 回复推送到 Telegram）
+- [x] 实现 Home Assistant 消息网关配置（HA URL、Long-Lived Access Token、Entity ID）
+- [x] 实现 Home Assistant 消息发送功能（通过 notify service 推送）
+- [x] 在设置页面添加"消息网关"配置区块
+- [x] 在聊天界面自动推送 AI 回复到已启用的网关

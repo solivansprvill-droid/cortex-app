@@ -5,37 +5,50 @@ import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import { ComponentProps } from "react";
 import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
-type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
+type IconMapping = Record<string, ComponentProps<typeof MaterialIcons>["name"]>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
+ * SF Symbols → Material Icons mapping
  */
-const MAPPING = {
+const MAPPING: IconMapping = {
   "house.fill": "home",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
-} as IconMapping;
+  "message.fill": "chat",
+  "clock.fill": "history",
+  "gearshape.fill": "settings",
+  "plus": "add",
+  "trash.fill": "delete",
+  "xmark": "close",
+  "arrow.up.circle.fill": "send",
+  "stop.circle.fill": "stop-circle",
+  "doc.on.clipboard": "content-copy",
+  "square.and.pencil": "edit",
+  "checkmark": "check",
+  "info.circle.fill": "info",
+  "exclamationmark.triangle.fill": "warning",
+  "eye": "visibility",
+  "eye.slash": "visibility-off",
+  "chevron.down": "expand-more",
+  "chevron.up": "expand-less",
+  "arrow.left": "arrow-back",
+  "ellipsis": "more-horiz",
+};
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
- */
 export function IconSymbol({
   name,
   size = 24,
   color,
   style,
 }: {
-  name: IconSymbolName;
+  name: string;
   size?: number;
   color: string | OpaqueColorValue;
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const iconName = MAPPING[name] ?? "help-outline";
+  return <MaterialIcons color={color} size={size} name={iconName} style={style} />;
 }
