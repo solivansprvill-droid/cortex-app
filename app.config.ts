@@ -29,7 +29,8 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   // App branding - update these values directly (do not use env vars)
   appName: "Cortex",
-  appSlug: "hermes_agent_mobile",
+  appSlug: "cortex-app",
+  owner: "cortexbtc",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
   logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663499457968/WohxQRkXiU49PDHRm7TbWm/cortex-icon-Mm24M84kqXpPNV3XwXYkfb.png",
@@ -41,6 +42,7 @@ const env = {
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
+  owner: env.owner,
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -124,6 +126,11 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      projectId: "954384dc-3fd3-40be-87f6-1064a055092e",
+    },
   },
 };
 
