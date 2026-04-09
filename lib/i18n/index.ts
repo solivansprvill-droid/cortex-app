@@ -17,9 +17,13 @@ export const SUPPORTED_LANGUAGES: { code: SupportedLanguage; label: string }[] =
 ];
 
 function getSystemLanguage(): string {
-  const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
-  if (locale.startsWith('zh')) return 'zh';
-  return 'en';
+  try {
+    const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
+    if (locale.startsWith('zh')) return 'zh';
+    return 'en';
+  } catch {
+    return 'en';
+  }
 }
 
 export async function getSavedLanguage(): Promise<SupportedLanguage> {
@@ -31,7 +35,9 @@ export async function getSavedLanguage(): Promise<SupportedLanguage> {
 }
 
 export async function saveLanguage(lang: SupportedLanguage): Promise<void> {
-  await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+  try {
+    await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+  } catch {}
 }
 
 export async function changeLanguage(lang: SupportedLanguage): Promise<void> {
@@ -40,22 +46,37 @@ export async function changeLanguage(lang: SupportedLanguage): Promise<void> {
   await i18n.changeLanguage(resolved);
 }
 
-export async function initI18n(): Promise<void> {
-  const saved = await getSavedLanguage();
-  const resolved = saved === 'auto' ? getSystemLanguage() : saved;
+let i18nInitialized = false;
 
-  await i18n
-    .use(initReactI18next)
-    .init({
-      resources: {
-        en: { translation: en },
-        zh: { translation: zh },
-      },
-      lng: resolved,
-      fallbackLng: 'en',
-      interpolation: { escapeValue: false },
-      compatibilityJSON: 'v4',
-    });
+export async function initI18n(): Promise<void> {
+  // Prevent multiple initializations
+  if (i18nInitialized || i18n.isInitialized) {
+    i18nInitialized = true;
+    return;
+  }
+
+  try {
+    const saved = await getSavedLanguage();
+    const resolved = saved === 'auto' ? getSystemLanguage() : saved;
+
+    await i18n
+      .use(initReactI18next)
+      .init({
+        resources: {
+          en: { translation: en },
+          zh: { translation: zh },
+        },
+        lng: resolved,
+        fallbackLng: 'en',
+        interpolation: { escapeValue: false },
+        compatibilityJSON: 'v4',
+      });
+
+    i18nInitialized = true;
+  } catch (e) {
+    // If i18n init fails, mark as initialized to unblock app startup
+    i18nInitialized = true;
+  }
 }
 
 export default i18n;

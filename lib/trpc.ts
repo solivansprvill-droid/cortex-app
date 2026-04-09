@@ -26,8 +26,12 @@ export function createTRPCClient() {
         // tRPC v11: transformer MUST be inside httpBatchLink, not at root
         transformer: superjson,
         async headers() {
-          const token = await Auth.getSessionToken();
-          return token ? { Authorization: `Bearer ${token}` } : {};
+          try {
+            const token = await Auth.getSessionToken();
+            return token ? { Authorization: `Bearer ${token}` } : {};
+          } catch {
+            return {};
+          }
         },
         // Custom fetch to include credentials for cookie-based auth
         fetch(url, options) {

@@ -41,11 +41,32 @@ export default function RootLayout() {
 
   // Initialize Manus runtime and i18n
   useEffect(() => {
-    initManusRuntime();
-    initI18n().then(() => setI18nReady(true));
-  }, []);
+    let cancelled = false;
 
-  if (!i18nReady) return null;
+    const init = async () => {
+      try {
+        initManusRuntime();
+      } catch {
+        // Ignore runtime init errors on non-web platforms
+      }
+
+      try {
+        await initI18n();
+      } catch {
+        // Even if i18n fails, unblock the app
+      }
+
+      if (!cancelled) {
+        setI18nReady(true);
+      }
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
@@ -86,6 +107,8 @@ export default function RootLayout() {
       },
     };
   }, [initialInsets, initialFrame]);
+
+  if (!i18nReady) return null;
 
   const content = (
     <I18nextProvider i18n={i18n}>
