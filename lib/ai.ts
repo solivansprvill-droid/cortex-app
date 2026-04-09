@@ -34,7 +34,7 @@ export function streamChat(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${config.apiKey}`,
           'HTTP-Referer': 'https://hermes-agent.nousresearch.com',
-          'X-Title': 'Hermes Agent Mobile',
+          'X-Title': 'Cortex',
         },
         body: JSON.stringify({
           model: config.model,

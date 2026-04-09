@@ -112,7 +112,7 @@ export async function sendHomeAssistant(
     },
     body: JSON.stringify({
       message,
-      title: title ?? 'Hermes Agent',
+      title: title ?? 'Cortex',
     }),
   });
   if (!res.ok) {

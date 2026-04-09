@@ -55,5 +55,5 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   temperature: 0.7,
   maxTokens: 2048,
   systemPrompt:
-    'You are Hermes, a helpful AI assistant built by Nous Research. You are knowledgeable, thoughtful, and precise. Help users with their questions and tasks.',
+    'You are Cortex, a helpful and intelligent AI assistant. You are knowledgeable, thoughtful, and precise. Help users with their questions and tasks.',
 };

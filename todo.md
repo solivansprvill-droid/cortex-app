@@ -27,3 +27,8 @@
 - [x] 实现 Home Assistant 消息发送功能（通过 notify service 推送）
 - [x] 在设置页面添加"消息网关"配置区块
 - [x] 在聊天界面自动推送 AI 回复到已启用的网关
+- [x] 将应用名称改为 Cortex
+- [x] 重新生成 Cortex 风格应用图标
+- [x] 更新 app.config.ts 应用名称和 logoUrl
+- [x] 更新聊天界面中的品牌文字引用
+- [x] 更新系统提示词中的 Hermes 名称

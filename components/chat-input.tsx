@@ -42,7 +42,7 @@ export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputPr
             ref={inputRef}
             value={text}
             onChangeText={setText}
-            placeholder="Message Hermes..."
+            placeholder="Message Cortex..."
             placeholderTextColor={colors.muted}
             multiline
             maxLength={8000}

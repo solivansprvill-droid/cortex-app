@@ -200,7 +200,7 @@ export default function SettingsScreen() {
           hint="Agent personality"
           value={model.systemPrompt}
           onChangeText={(v) => setModel((m) => ({ ...m, systemPrompt: v }))}
-          placeholder="You are Hermes, a helpful AI assistant..."
+          placeholder="You are Cortex, a helpful AI assistant..."
           multiline
         />
 
