@@ -32,3 +32,11 @@
 - [x] 更新 app.config.ts 应用名称和 logoUrl
 - [x] 更新聊天界面中的品牌文字引用
 - [x] 更新系统提示词中的 Hermes 名称
+- [x] 安装 i18n 国际化库（i18next + react-i18next + expo-localization）
+- [x] 创建中英文语言包（en.json / zh.json）
+- [x] 实现语言自动检测（跟随系统）和手动切换
+- [x] 更新所有界面文字使用 i18n key
+- [x] 在设置页面添加语言切换选项
+- [x] 配置 eas.json（EAS Build 构建配置）
+- [x] 配置 GitHub Actions workflow（push 触发自动构建 APK）
+- [x] 推送更新到 GitHub

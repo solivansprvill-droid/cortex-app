@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/lib/app-context';
 import { useColors } from '@/hooks/use-colors';
@@ -19,6 +20,7 @@ function formatDate(ts: number): string {
 export default function HistoryScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const { state, setActive, removeConversation, clearAll } = useApp();
 
   const handleSelect = (id: string) => {
@@ -27,16 +29,16 @@ export default function HistoryScreen() {
   };
 
   const handleDelete = (id: string, title: string) => {
-    Alert.alert('Delete Conversation', `Delete "${title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => removeConversation(id) },
+    Alert.alert(t('history.deleteTitle'), `${t('history.deleteMsg').replace('?', '')} "${title}"?`, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeConversation(id) },
     ]);
   };
 
   const handleClearAll = () => {
-    Alert.alert('Clear All Conversations', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => clearAll() },
+    Alert.alert(t('history.clearAllTitle'), t('history.clearAllMsg'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('history.clearAll'), style: 'destructive', onPress: () => clearAll() },
     ]);
   };
 
@@ -44,13 +46,13 @@ export default function HistoryScreen() {
     <ScreenContainer edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>History</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t('history.title')}</Text>
         {state.conversations.length > 0 && (
           <Pressable
             onPress={handleClearAll}
             style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.6 }]}
           >
-            <Text style={[styles.clearText, { color: colors.error }]}>Clear All</Text>
+            <Text style={[styles.clearText, { color: colors.error }]}>{t('history.clearAll')}</Text>
           </Pressable>
         )}
       </View>
@@ -58,7 +60,8 @@ export default function HistoryScreen() {
       {state.conversations.length === 0 ? (
         <View style={styles.empty}>
           <IconSymbol name="clock.fill" size={48} color={colors.border} />
-          <Text style={[styles.emptyText, { color: colors.muted }]}>No conversations yet</Text>
+          <Text style={[styles.emptyText, { color: colors.muted }]}>{t('history.empty')}</Text>
+          <Text style={[styles.emptySubText, { color: colors.muted }]}>{t('history.emptySubtitle')}</Text>
         </View>
       ) : (
         <FlatList
@@ -86,7 +89,7 @@ export default function HistoryScreen() {
                     {item.title}
                   </Text>
                   <Text style={[styles.itemPreview, { color: colors.muted }]} numberOfLines={1}>
-                    {item.messages[item.messages.length - 1]?.content?.slice(0, 60) ?? 'No messages'}
+                    {item.messages[item.messages.length - 1]?.content?.slice(0, 60) ?? ''}
                   </Text>
                 </View>
               </View>
@@ -120,8 +123,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700' },
   clearBtn: { paddingVertical: 4, paddingHorizontal: 8 },
   clearText: { fontSize: 14, fontWeight: '500' },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  emptyText: { fontSize: 15 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  emptyText: { fontSize: 16, fontWeight: '600' },
+  emptySubText: { fontSize: 13, textAlign: 'center', paddingHorizontal: 32 },
   list: { paddingVertical: 4 },
   item: {
     flexDirection: 'row',

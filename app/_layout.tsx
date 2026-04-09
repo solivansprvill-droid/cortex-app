@@ -19,6 +19,9 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { AppProvider } from "@/lib/app-context";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
+import { initI18n } from "@/lib/i18n";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -34,10 +37,15 @@ export default function RootLayout() {
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
 
-  // Initialize Manus runtime for cookie injection from parent container
+  const [i18nReady, setI18nReady] = useState(false);
+
+  // Initialize Manus runtime and i18n
   useEffect(() => {
     initManusRuntime();
+    initI18n().then(() => setI18nReady(true));
   }, []);
+
+  if (!i18nReady) return null;
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
@@ -80,6 +88,7 @@ export default function RootLayout() {
   }, [initialInsets, initialFrame]);
 
   const content = (
+    <I18nextProvider i18n={i18n}>
     <AppProvider>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
@@ -96,6 +105,7 @@ export default function RootLayout() {
       </trpc.Provider>
     </GestureHandlerRootView>
     </AppProvider>
+    </I18nextProvider>
   );
 
   const shouldOverrideSafeArea = Platform.OS === "web";

@@ -49,7 +49,7 @@ export const DEFAULT_GATEWAY_CONFIG: GatewayConfig = {
 };
 
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
-  baseUrl: 'https://openrouter.ai/api/v1',
+  baseUrl: 'https://api.edgefn.net/v1',
   apiKey: '',
   model: 'nousresearch/hermes-3-llama-3.1-405b',
   temperature: 0.7,

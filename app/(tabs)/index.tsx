@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, Pressable, StyleSheet, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ScreenContainer } from '@/components/screen-container';
 import { MessageBubble } from '@/components/message-bubble';
 import { ChatInput } from '@/components/chat-input';
@@ -16,9 +17,10 @@ import { sendTelegram, sendHomeAssistant } from '@/lib/gateway';
 export default function ChatScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const {
     state, activeConversation, createConversation,
-    addMessage, updateLastMessage, setActive,
+    addMessage, updateLastMessage,
   } = useApp();
 
   const flatListRef = useRef<FlatList>(null);
@@ -47,9 +49,9 @@ export default function ChatScreen() {
 
     if (!modelConfig.apiKey) {
       Alert.alert(
-        'API Key Required',
-        'Please configure your API key in Settings before chatting.',
-        [{ text: 'Go to Settings', onPress: () => router.push('/settings') }]
+        t('chat.apiKeyRequired'),
+        t('chat.apiKeyRequiredMsg'),
+        [{ text: t('chat.goToSettings'), onPress: () => router.push('/settings') }]
       );
       return;
     }
@@ -105,7 +107,6 @@ export default function ChatScreen() {
             );
           }
         } catch (e) {
-          // Gateway errors are non-fatal
           console.warn('Gateway push failed:', e);
         }
       },
@@ -116,7 +117,7 @@ export default function ChatScreen() {
     });
 
     abortRef.current = controller;
-  }, [activeConversation, state, addMessage, updateLastMessage, scrollToBottom, router]);
+  }, [activeConversation, state, addMessage, updateLastMessage, scrollToBottom, router, t]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -148,7 +149,7 @@ export default function ChatScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>
-            {activeConversation?.title ?? 'Cortex'}
+            {activeConversation?.title ?? t('chat.title')}
           </Text>
           <View style={[styles.modelBadge, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modelBadgeText, { color: colors.muted }]} numberOfLines={1}>
@@ -173,16 +174,14 @@ export default function ChatScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Cortex</Text>
           <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
-            {isConfigured
-              ? 'Your intelligent AI assistant.\nStart a conversation below.'
-              : 'Configure your API key in Settings to get started.'}
+            {isConfigured ? t('chat.emptySubtitle') : t('chat.emptySubtitleNoKey')}
           </Text>
           {!isConfigured && (
             <Pressable
               onPress={() => router.push('/settings')}
               style={({ pressed }) => [styles.setupBtn, { backgroundColor: colors.primary }, pressed && { opacity: 0.8 }]}
             >
-              <Text style={styles.setupBtnText}>Configure API Key</Text>
+              <Text style={styles.setupBtnText}>{t('chat.configureApiKey')}</Text>
             </Pressable>
           )}
         </View>

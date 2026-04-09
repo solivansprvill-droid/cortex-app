@@ -3,12 +3,14 @@ import {
   View, Text, TextInput, ScrollView, Pressable,
   StyleSheet, Switch, Alert, ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/lib/app-context';
 import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ModelConfig, GatewayConfig } from '@/lib/types';
 import { testTelegramBot, testHomeAssistantConnection } from '@/lib/gateway';
+import { changeLanguage, getSavedLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/lib/i18n';
 
 // ─── Reusable field components ────────────────────────────────────────────────
 
@@ -16,7 +18,7 @@ function SectionHeader({ title, icon }: { title: string; icon: string }) {
   const colors = useColors();
   return (
     <View style={styles.sectionHeader}>
-      <IconSymbol name={icon} size={16} color={colors.primary} />
+      <IconSymbol name={icon as any} size={16} color={colors.primary} />
       <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
     </View>
   );
@@ -67,7 +69,7 @@ function TextRow({
   );
 }
 
-function SliderRow({ label, value, min, max, step, onChangeText, unit }: {
+function SliderRow({ label, value, min, max, onChangeText, unit }: {
   label: string; value: number; min: number; max: number; step: number;
   onChangeText: (v: string) => void; unit?: string;
 }) {
@@ -94,6 +96,7 @@ function SliderRow({ label, value, min, max, step, onChangeText, unit }: {
 
 export default function SettingsScreen() {
   const colors = useColors();
+  const { t, i18n } = useTranslation();
   const { state, updateModelConfig, updateGatewayConfig } = useApp();
 
   const [model, setModel] = useState<ModelConfig>(state.modelConfig);
@@ -101,9 +104,13 @@ export default function SettingsScreen() {
   const [tgTesting, setTgTesting] = useState(false);
   const [haTesting, setHaTesting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [currentLang, setCurrentLang] = useState<SupportedLanguage>('auto');
 
   useEffect(() => { setModel(state.modelConfig); }, [state.modelConfig]);
   useEffect(() => { setGateway(state.gatewayConfig); }, [state.gatewayConfig]);
+  useEffect(() => {
+    getSavedLanguage().then(setCurrentLang);
+  }, []);
 
   const handleSave = () => {
     updateModelConfig(model);
@@ -112,72 +119,101 @@ export default function SettingsScreen() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const handleLangChange = async (lang: SupportedLanguage) => {
+    setCurrentLang(lang);
+    await changeLanguage(lang);
+  };
+
   const handleTestTelegram = async () => {
     if (!gateway.telegram.botToken) {
-      Alert.alert('Missing Bot Token', 'Please enter a Telegram Bot Token first.');
+      Alert.alert(t('common.error'), t('settings.botToken') + ' required');
       return;
     }
     setTgTesting(true);
     const result = await testTelegramBot(gateway.telegram.botToken);
     setTgTesting(false);
-    Alert.alert(result.ok ? '✅ Connected' : '❌ Failed', result.message);
+    Alert.alert(result.ok ? '✅ ' + t('common.success') : '❌ ' + t('common.error'), result.message);
   };
 
   const handleTestHA = async () => {
     if (!gateway.homeAssistant.url || !gateway.homeAssistant.token) {
-      Alert.alert('Missing Info', 'Please enter HA URL and Token first.');
+      Alert.alert(t('common.error'), t('settings.haUrl') + ' & ' + t('settings.haToken') + ' required');
       return;
     }
     setHaTesting(true);
     const result = await testHomeAssistantConnection(gateway.homeAssistant.url, gateway.homeAssistant.token);
     setHaTesting(false);
-    Alert.alert(result.ok ? '✅ Connected' : '❌ Failed', result.message);
+    Alert.alert(result.ok ? '✅ ' + t('common.success') : '❌ ' + t('common.error'), result.message);
   };
 
   return (
     <ScreenContainer edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Settings</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t('settings.title')}</Text>
         <Pressable
           onPress={handleSave}
           style={({ pressed }) => [styles.saveBtn, { backgroundColor: saved ? colors.success : colors.primary }, pressed && { opacity: 0.8 }]}
         >
           <IconSymbol name={saved ? 'checkmark' : 'paperplane.fill'} size={16} color="#FFFFFF" />
-          <Text style={styles.saveBtnText}>{saved ? 'Saved!' : 'Save'}</Text>
+          <Text style={styles.saveBtnText}>{saved ? t('settings.configSaved') : t('settings.saveConfig')}</Text>
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
+        {/* ── Language ── */}
+        <SectionHeader title={t('settings.language')} icon="globe" />
+        <View style={[styles.langRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          {SUPPORTED_LANGUAGES.map((lang) => (
+            <Pressable
+              key={lang.code}
+              onPress={() => handleLangChange(lang.code)}
+              style={({ pressed }) => [
+                styles.langBtn,
+                currentLang === lang.code && { backgroundColor: colors.primary },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Text style={[
+                styles.langBtnText,
+                { color: currentLang === lang.code ? '#FFFFFF' : colors.foreground },
+              ]}>
+                {lang.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
         {/* ── Model Configuration ── */}
-        <SectionHeader title="Model Configuration" icon="gearshape.fill" />
+        <SectionHeader title={t('settings.modelConfig')} icon="gearshape.fill" />
 
         <TextRow
-          label="Base URL"
-          hint="OpenAI-compatible endpoint"
+          label={t('settings.baseUrl')}
+          hint={t('settings.baseUrlHint')}
           value={model.baseUrl}
           onChangeText={(v) => setModel((m) => ({ ...m, baseUrl: v }))}
           placeholder="https://openrouter.ai/api/v1"
           keyboardType="url"
         />
         <TextRow
-          label="API Key"
+          label={t('settings.apiKey')}
+          hint={t('settings.apiKeyHint')}
           value={model.apiKey}
           onChangeText={(v) => setModel((m) => ({ ...m, apiKey: v }))}
-          placeholder="sk-..."
+          placeholder={t('settings.apiKeyPlaceholder')}
           secureTextEntry
         />
         <TextRow
-          label="Model"
-          hint="e.g. nousresearch/hermes-3-llama-3.1-405b"
+          label={t('settings.model')}
+          hint={t('settings.modelHint')}
           value={model.model}
           onChangeText={(v) => setModel((m) => ({ ...m, model: v }))}
-          placeholder="nousresearch/hermes-3-llama-3.1-405b"
+          placeholder={t('settings.modelPlaceholder')}
         />
 
         <SliderRow
-          label="Temperature"
+          label={t('settings.temperature')}
           value={model.temperature}
           min={0} max={2} step={0.1}
           onChangeText={(v) => {
@@ -186,7 +222,7 @@ export default function SettingsScreen() {
           }}
         />
         <SliderRow
-          label="Max Tokens"
+          label={t('settings.maxTokens')}
           value={model.maxTokens}
           min={100} max={8192} step={128}
           onChangeText={(v) => {
@@ -196,20 +232,23 @@ export default function SettingsScreen() {
         />
 
         <TextRow
-          label="System Prompt"
-          hint="Agent personality"
+          label={t('settings.systemPrompt')}
+          hint={t('settings.systemPromptHint')}
           value={model.systemPrompt}
           onChangeText={(v) => setModel((m) => ({ ...m, systemPrompt: v }))}
-          placeholder="You are Cortex, a helpful AI assistant..."
+          placeholder={t('settings.systemPromptPlaceholder')}
           multiline
         />
 
         {/* ── Telegram Gateway ── */}
         <View style={styles.divider} />
-        <SectionHeader title="Telegram Gateway" icon="paperplane.fill" />
+        <SectionHeader title={t('settings.telegram')} icon="paperplane.fill" />
 
         <View style={[styles.toggleRow, { borderColor: colors.border }]}>
-          <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Enable Telegram</Text>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('settings.telegram')}</Text>
+            <Text style={[styles.fieldHint, { color: colors.muted }]}>{t('settings.telegramDesc')}</Text>
+          </View>
           <Switch
             value={gateway.telegram.enabled}
             onValueChange={(v) => setGateway((g) => ({ ...g, telegram: { ...g.telegram, enabled: v } }))}
@@ -221,19 +260,19 @@ export default function SettingsScreen() {
         {gateway.telegram.enabled && (
           <>
             <TextRow
-              label="Bot Token"
-              hint="From @BotFather"
+              label={t('settings.botToken')}
+              hint={t('settings.botTokenHint')}
               value={gateway.telegram.botToken}
               onChangeText={(v) => setGateway((g) => ({ ...g, telegram: { ...g.telegram, botToken: v } }))}
-              placeholder="123456789:AABBccDDee..."
+              placeholder={t('settings.botTokenPlaceholder')}
               secureTextEntry
             />
             <TextRow
-              label="Chat ID"
-              hint="Your personal or group chat ID"
+              label={t('settings.chatId')}
+              hint={t('settings.chatIdHint')}
               value={gateway.telegram.chatId}
               onChangeText={(v) => setGateway((g) => ({ ...g, telegram: { ...g.telegram, chatId: v } }))}
-              placeholder="-100123456789"
+              placeholder={t('settings.chatIdPlaceholder')}
               keyboardType="numbers-and-punctuation"
             />
             <Pressable
@@ -245,7 +284,7 @@ export default function SettingsScreen() {
               ) : (
                 <>
                   <IconSymbol name="checkmark" size={14} color={colors.primary} />
-                  <Text style={[styles.testBtnText, { color: colors.primary }]}>Test Connection</Text>
+                  <Text style={[styles.testBtnText, { color: colors.primary }]}>{t('settings.testConnection')}</Text>
                 </>
               )}
             </Pressable>
@@ -254,10 +293,13 @@ export default function SettingsScreen() {
 
         {/* ── Home Assistant Gateway ── */}
         <View style={styles.divider} />
-        <SectionHeader title="Home Assistant Gateway" icon="house.fill" />
+        <SectionHeader title={t('settings.homeAssistant')} icon="house.fill" />
 
         <View style={[styles.toggleRow, { borderColor: colors.border }]}>
-          <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Enable Home Assistant</Text>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('settings.homeAssistant')}</Text>
+            <Text style={[styles.fieldHint, { color: colors.muted }]}>{t('settings.homeAssistantDesc')}</Text>
+          </View>
           <Switch
             value={gateway.homeAssistant.enabled}
             onValueChange={(v) => setGateway((g) => ({ ...g, homeAssistant: { ...g.homeAssistant, enabled: v } }))}
@@ -269,24 +311,24 @@ export default function SettingsScreen() {
         {gateway.homeAssistant.enabled && (
           <>
             <TextRow
-              label="Home Assistant URL"
-              hint="e.g. http://homeassistant.local:8123"
+              label={t('settings.haUrl')}
+              hint={t('settings.haUrlHint')}
               value={gateway.homeAssistant.url}
               onChangeText={(v) => setGateway((g) => ({ ...g, homeAssistant: { ...g.homeAssistant, url: v } }))}
-              placeholder="http://homeassistant.local:8123"
+              placeholder={t('settings.haUrlHint')}
               keyboardType="url"
             />
             <TextRow
-              label="Long-Lived Access Token"
-              hint="Profile → Security → Long-Lived Access Tokens"
+              label={t('settings.haToken')}
+              hint={t('settings.haTokenHint')}
               value={gateway.homeAssistant.token}
               onChangeText={(v) => setGateway((g) => ({ ...g, homeAssistant: { ...g.homeAssistant, token: v } }))}
-              placeholder="eyJ0eXAiOiJKV1Q..."
+              placeholder={t('settings.haTokenPlaceholder')}
               secureTextEntry
             />
             <TextRow
-              label="Notify Service"
-              hint="e.g. notify.mobile_app_phone"
+              label={t('settings.notifyService')}
+              hint={t('settings.notifyServiceHint')}
               value={gateway.homeAssistant.notifyService}
               onChangeText={(v) => setGateway((g) => ({ ...g, homeAssistant: { ...g.homeAssistant, notifyService: v } }))}
               placeholder="notify.notify"
@@ -300,12 +342,19 @@ export default function SettingsScreen() {
               ) : (
                 <>
                   <IconSymbol name="checkmark" size={14} color={colors.primary} />
-                  <Text style={[styles.testBtnText, { color: colors.primary }]}>Test Connection</Text>
+                  <Text style={[styles.testBtnText, { color: colors.primary }]}>{t('settings.testConnection')}</Text>
                 </>
               )}
             </Pressable>
           </>
         )}
+
+        {/* About */}
+        <View style={styles.divider} />
+        <View style={styles.about}>
+          <Text style={[styles.aboutText, { color: colors.muted }]}>Cortex v1.0.0</Text>
+          <Text style={[styles.aboutText, { color: colors.muted }]}>{t('settings.poweredBy')}</Text>
+        </View>
 
         <View style={styles.bottomPad} />
       </ScrollView>
@@ -376,5 +425,21 @@ const styles = StyleSheet.create({
   },
   testBtnText: { fontSize: 14, fontWeight: '500' },
   divider: { height: 1, backgroundColor: 'transparent', marginTop: 8 },
+  langRow: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  langBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langBtnText: { fontSize: 13, fontWeight: '500' },
+  about: { alignItems: 'center', gap: 4, marginTop: 16 },
+  aboutText: { fontSize: 12 },
   bottomPad: { height: 40 },
 });
