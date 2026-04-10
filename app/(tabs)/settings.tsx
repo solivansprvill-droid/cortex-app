@@ -9,7 +9,7 @@ import { useApp } from '@/lib/app-context';
 import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ModelConfig, GatewayConfig } from '@/lib/types';
-import { testTelegramBot, testHomeAssistantConnection } from '@/lib/gateway';
+import { testTelegramBot, testHomeAssistantConnection, fetchTelegramUpdates } from '@/lib/gateway';
 import { changeLanguage, getSavedLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/lib/i18n';
 
 // ─── Reusable field components ────────────────────────────────────────────────
@@ -102,6 +102,7 @@ export default function SettingsScreen() {
   const [model, setModel] = useState<ModelConfig>(state.modelConfig);
   const [gateway, setGateway] = useState<GatewayConfig>(state.gatewayConfig);
   const [tgTesting, setTgTesting] = useState(false);
+  const [tgFetchingChatId, setTgFetchingChatId] = useState(false);
   const [haTesting, setHaTesting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [currentLang, setCurrentLang] = useState<SupportedLanguage>('auto');
@@ -133,6 +134,28 @@ export default function SettingsScreen() {
     const result = await testTelegramBot(gateway.telegram.botToken);
     setTgTesting(false);
     Alert.alert(result.ok ? '✅ ' + t('common.success') : '❌ ' + t('common.error'), result.message);
+  };
+
+  const handleFetchChatId = async () => {
+    if (!gateway.telegram.botToken) {
+      Alert.alert('提示', '请先填写 Bot Token');
+      return;
+    }
+    setTgFetchingChatId(true);
+    try {
+      const updates = await fetchTelegramUpdates(gateway.telegram.botToken);
+      if (updates.length === 0) {
+        Alert.alert('未找到', '请先在 Telegram 中向 Bot 发送任意消息，然后再点此按鈕');
+      } else {
+        const latest = updates[updates.length - 1];
+        setGateway((g) => ({ ...g, telegram: { ...g.telegram, chatId: latest.chatId } }));
+        Alert.alert('✅ 已自动填入', `Chat ID: ${latest.chatId}\n请点击“保存配置”保存`);
+      }
+    } catch (e: any) {
+      Alert.alert('获取失败', e?.message ?? '未知错误');
+    } finally {
+      setTgFetchingChatId(false);
+    }
   };
 
   const handleTestHA = async () => {
@@ -276,19 +299,34 @@ export default function SettingsScreen() {
               placeholder={t('settings.chatIdPlaceholder')}
               keyboardType="numbers-and-punctuation"
             />
-            <Pressable
-              onPress={handleTestTelegram}
-              style={({ pressed }) => [styles.testBtn, { borderColor: colors.primary }, pressed && { opacity: 0.7 }]}
-            >
-              {tgTesting ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <>
-                  <IconSymbol name="checkmark" size={14} color={colors.primary} />
-                  <Text style={[styles.testBtnText, { color: colors.primary }]}>{t('settings.testConnection')}</Text>
-                </>
-              )}
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+              <Pressable
+                onPress={handleFetchChatId}
+                style={({ pressed }) => [styles.testBtn, { borderColor: colors.muted, flex: 1 }, pressed && { opacity: 0.7 }]}
+              >
+                {tgFetchingChatId ? (
+                  <ActivityIndicator size="small" color={colors.muted} />
+                ) : (
+                  <>
+                    <IconSymbol name="arrow.down.circle" size={14} color={colors.muted} />
+                    <Text style={[styles.testBtnText, { color: colors.muted }]}>自动获取 Chat ID</Text>
+                  </>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={handleTestTelegram}
+                style={({ pressed }) => [styles.testBtn, { borderColor: colors.primary, flex: 1 }, pressed && { opacity: 0.7 }]}
+              >
+                {tgTesting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <IconSymbol name="checkmark" size={14} color={colors.primary} />
+                    <Text style={[styles.testBtnText, { color: colors.primary }]}>{t('settings.testConnection')}</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
           </>
         )}
 

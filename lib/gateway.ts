@@ -48,13 +48,13 @@ export async function sendTelegram(
   text: string
 ): Promise<void> {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  // Do NOT use parse_mode to avoid errors from special Markdown characters in AI responses
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      text,
-      parse_mode: 'Markdown',
+      text: text.slice(0, 4096), // Telegram max message length
     }),
   });
   if (!res.ok) {

@@ -49,13 +49,11 @@ export async function testModelConnection(
         messages: [{ role: 'user', content: 'Hi' }],
       };
     } else if (apiType === 'google') {
-      // Google Gemini via generateContent (native API, not OpenAI-compat)
       const modelPath = config.model.startsWith('models/') ? config.model : `models/${config.model}`;
       url = `${baseUrl}/${modelPath}:generateContent?key=${config.apiKey}`;
       headers = { 'Content-Type': 'application/json' };
       body = { contents: [{ parts: [{ text: 'Hi' }] }] };
     } else {
-      // OpenAI-compatible
       url = `${baseUrl}/chat/completions`;
       headers = {
         'Content-Type': 'application/json',
@@ -120,10 +118,23 @@ export interface StreamCallbacks {
   onChunk: (text: string) => void;
   onDone: () => void;
   onError: (err: Error) => void;
-  /** Called when a tool call starts executing */
   onToolStart?: (toolCall: ToolCall) => void;
-  /** Called when a tool call finishes */
   onToolDone?: (result: ToolResult) => void;
+}
+
+// ─── Internal: simulate streaming by emitting chunks from a full response ────
+
+async function emitChunks(
+  text: string,
+  onChunk: (t: string) => void,
+  signal: AbortSignal
+): Promise<void> {
+  const CHUNK = 6;
+  for (let i = 0; i < text.length; i += CHUNK) {
+    if (signal.aborted) return;
+    onChunk(text.slice(i, i + CHUNK));
+    await new Promise((r) => setTimeout(r, 10));
+  }
 }
 
 // ─── Internal: one non-streaming turn (for tool call loop) ───────────────────
@@ -184,7 +195,9 @@ async function chatOnce(
   return { content: message.content ?? null, toolCalls };
 }
 
-// ─── Main: streaming chat with optional tool loop ────────────────────────────
+// ─── Main: chat with optional tool loop ──────────────────────────────────────
+// NOTE: React Native's fetch does NOT support ReadableStream (response.body).
+// We use stream:false and simulate streaming via emitChunks() for UX.
 
 export function streamChat(
   messages: Message[],
@@ -210,8 +223,8 @@ export function streamChat(
       const tools = toolsets ? toOpenAITools(toolsets) : [];
       const hasTools = tools.length > 0;
 
-      // ── If tools are enabled, use non-streaming agent loop ──────────────────
       if (hasTools) {
+        // ── Tool-enabled agent loop ──────────────────────────────────────────
         const MAX_ITERATIONS = 8;
         let iteration = 0;
         const loopMessages = [...apiMessages];
@@ -221,33 +234,28 @@ export function streamChat(
           const { content, toolCalls } = await chatOnce(loopMessages, config, tools, controller.signal);
 
           if (toolCalls.length === 0) {
-            // Final answer — stream it character by character for UX
             if (content) {
-              const chunkSize = 4;
-              for (let i = 0; i < content.length; i += chunkSize) {
-                if (controller.signal.aborted) return;
-                callbacks.onChunk(content.slice(i, i + chunkSize));
-                await new Promise((r) => setTimeout(r, 8));
-              }
+              await emitChunks(content, callbacks.onChunk, controller.signal);
             }
             callbacks.onDone();
             return;
           }
 
-          // Add assistant message with tool calls
-          loopMessages.push({ role: 'assistant', content, tool_calls: toolCalls.map((tc) => ({
-            id: tc.id,
-            type: 'function',
-            function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-          })) });
+          loopMessages.push({
+            role: 'assistant',
+            content,
+            tool_calls: toolCalls.map((tc) => ({
+              id: tc.id,
+              type: 'function',
+              function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+            })),
+          });
 
-          // Execute each tool call
           for (const toolCall of toolCalls) {
             if (controller.signal.aborted) return;
             callbacks.onToolStart?.(toolCall);
             const result = await executeTool(toolCall);
             callbacks.onToolDone?.(result);
-
             loopMessages.push({
               role: 'tool',
               tool_call_id: toolCall.id,
@@ -256,14 +264,18 @@ export function streamChat(
           }
         }
 
-        // Max iterations reached
         callbacks.onChunk('\n\n[已达最大工具调用次数]');
         callbacks.onDone();
         return;
       }
 
-      // ── No tools: standard streaming ─────────────────────────────────────────
+      // ── No tools: non-streaming request + simulated streaming ───────────────
       const baseUrl = config.baseUrl.replace(/\/$/, '');
+      const { signal, clear } = makeTimeoutSignal(120000); // 2 min timeout
+
+      // Merge with abort controller so user can cancel
+      controller.signal.addEventListener('abort', () => clear());
+
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -275,45 +287,36 @@ export function streamChat(
         body: JSON.stringify({
           model: config.model,
           messages: apiMessages,
-          stream: true,
+          stream: false,
           temperature: config.temperature,
           max_tokens: config.maxTokens,
         }),
-        signal: controller.signal,
+        signal,
       });
+
+      clear();
+
+      if (controller.signal.aborted) return;
 
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`API error ${response.status}: ${errText}`);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+      const json = await response.json();
+      const content = json?.choices?.[0]?.message?.content ?? '';
 
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === 'data: [DONE]') continue;
-          if (!trimmed.startsWith('data: ')) continue;
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta) callbacks.onChunk(delta);
-          } catch { /* ignore */ }
-        }
+      if (!content) {
+        callbacks.onDone();
+        return;
       }
 
-      callbacks.onDone();
+      // Simulate streaming for smooth UX
+      await emitChunks(content, callbacks.onChunk, controller.signal);
+
+      if (!controller.signal.aborted) {
+        callbacks.onDone();
+      }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
       callbacks.onError(err instanceof Error ? err : new Error(String(err)));

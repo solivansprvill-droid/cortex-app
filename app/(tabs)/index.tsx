@@ -94,7 +94,7 @@ export default function ChatScreen() {
             await sendTelegram(
               gatewayConfig.telegram.botToken,
               gatewayConfig.telegram.chatId,
-              `*Cortex:* ${fullContent.slice(0, 4000)}`
+              fullContent
             );
           }
           if (gatewayConfig.homeAssistant.enabled && gatewayConfig.homeAssistant.token) {
