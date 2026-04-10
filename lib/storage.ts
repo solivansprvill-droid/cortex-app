@@ -37,6 +37,10 @@ export async function loadModelConfig(): Promise<ModelConfig> {
   try {
     const raw = await AsyncStorage.getItem(MODEL_CONFIG_KEY);
     const config: ModelConfig = raw ? { ...DEFAULT_MODEL_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_MODEL_CONFIG };
+    // Migration: if stored maxTokens is below the new default, upgrade it
+    if (config.maxTokens < DEFAULT_MODEL_CONFIG.maxTokens) {
+      config.maxTokens = DEFAULT_MODEL_CONFIG.maxTokens;
+    }
     // Load API key from secure store
     const apiKey = await SecureStore.getItemAsync(API_KEY_SECURE);
     config.apiKey = apiKey ?? '';

@@ -40,34 +40,34 @@ export default function ToolsScreen() {
 
   return (
     <ScreenContainer edges={['top', 'left', 'right']}>
-      {/* Header */}
+      {/* 标题栏 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tools</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>工具</Text>
         <View style={[styles.badge, { backgroundColor: colors.primary + '20' }]}>
           <Text style={[styles.badgeText, { color: colors.primary }]}>
-            {totalTools} active
+            {totalTools} 个已启用
           </Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Summary */}
+        {/* 摘要 */}
         <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <IconSymbol name="wrench.and.screwdriver.fill" size={20} color={colors.primary} />
           <Text style={[styles.summaryText, { color: colors.foreground }]}>
-            <Text style={{ fontWeight: '700' }}>{enabledCount}</Text> of {toolsets.length} toolsets enabled
-            {' · '}<Text style={{ fontWeight: '700' }}>{totalTools}</Text> tools available
+            已启用 <Text style={{ fontWeight: '700' }}>{enabledCount}</Text> / {toolsets.length} 个工具集
+            {'  ·  '}<Text style={{ fontWeight: '700' }}>{totalTools}</Text> 个工具可用
           </Text>
         </View>
 
-        <Text style={[styles.sectionLabel, { color: colors.muted }]}>TOOLSETS</Text>
+        <Text style={[styles.sectionLabel, { color: colors.muted }]}>工具集</Text>
 
         {toolsets.map((toolset) => (
           <View
             key={toolset.id}
             style={[styles.card, { backgroundColor: colors.surface, borderColor: toolset.enabled ? colors.primary + '40' : colors.border }]}
           >
-            {/* Toolset Header */}
+            {/* 工具集标题 */}
             <Pressable
               style={styles.cardHeader}
               onPress={() => setExpanded(expanded === toolset.id ? null : toolset.id)}
@@ -87,7 +87,7 @@ export default function ToolsScreen() {
               </View>
               <View style={styles.cardRight}>
                 <Text style={[styles.toolCount, { color: colors.muted }]}>
-                  {toolset.tools.length} {toolset.tools.length === 1 ? 'tool' : 'tools'}
+                  {toolset.tools.length} 个工具
                 </Text>
                 <Switch
                   value={toolset.enabled}
@@ -98,7 +98,7 @@ export default function ToolsScreen() {
               </View>
             </Pressable>
 
-            {/* Expanded tool list */}
+            {/* 展开的工具列表 */}
             {expanded === toolset.id && (
               <View style={[styles.toolList, { borderTopColor: colors.border }]}>
                 {toolset.tools.map((tool) => (
@@ -115,11 +115,11 @@ export default function ToolsScreen() {
           </View>
         ))}
 
-        {/* Info box */}
+        {/* 说明框 */}
         <View style={[styles.infoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <IconSymbol name="info.circle.fill" size={16} color={colors.muted} />
           <Text style={[styles.infoText, { color: colors.muted }]}>
-            Enabled tools are automatically available to the AI during conversations. The AI decides when to use them based on your messages.
+            已启用的工具在对话中会自动提供给 AI 使用。AI 会根据您的消息内容决定何时调用这些工具。
           </Text>
         </View>
 

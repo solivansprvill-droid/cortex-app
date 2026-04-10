@@ -405,9 +405,13 @@ export default function ModelsScreen() {
       return;
     }
     // Auto-detect API type from baseUrl
+    // Note: if the URL ends with /openai/ it's OpenAI-compatible even for Google
     let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
     if (preset.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
-    else if (preset.baseUrl.includes('googleapis.com') || preset.baseUrl.includes('generativelanguage')) apiType = 'google';
+    else if (
+      (preset.baseUrl.includes('googleapis.com') || preset.baseUrl.includes('generativelanguage')) &&
+      !preset.baseUrl.includes('/openai')
+    ) apiType = 'google';
     setModelState(preset.model, { status: 'testing' });
     const result = await testModelConnection({ baseUrl: preset.baseUrl, apiKey: key, model: preset.model, apiType });
     setModelState(preset.model, { status: result.ok ? 'success' : 'error', result });
@@ -470,7 +474,10 @@ export default function ModelsScreen() {
       await Promise.all(batch.map(async (p) => {
         let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
         if (p.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
-        else if (p.baseUrl.includes('googleapis.com') || p.baseUrl.includes('generativelanguage')) apiType = 'google';
+        else if (
+          (p.baseUrl.includes('googleapis.com') || p.baseUrl.includes('generativelanguage')) &&
+          !p.baseUrl.includes('/openai')
+        ) apiType = 'google';
         const result = await testModelConnection({ baseUrl: p.baseUrl, apiKey: key, model: p.model, apiType });
         setModelState(p.model, { status: result.ok ? 'success' : 'error', result });
       }));

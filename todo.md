@@ -106,3 +106,7 @@
 ### AI 人格设置（SOUL.md）
 - [ ] AI 人格编辑器（自定义 System Prompt 人格部分）
 - [ ] 预置人格模板选择
+- [ ] 修复最大 Token 数默认值未生效（需同步修改 types.ts、app-context.tsx、settings.tsx）
+- [ ] Tools 页面全部文本改为中文简体
+- [ ] Memory 页面全部文本改为中文简体
+- [ ] 彻底修复模型测试连接功能

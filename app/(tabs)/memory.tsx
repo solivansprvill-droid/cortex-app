@@ -49,10 +49,10 @@ export default function MemoryScreen() {
   }, [newKey, newValue, newCategory]);
 
   const handleDeleteEntry = useCallback(async (key: string) => {
-    Alert.alert('Delete Memory', `Remove "${key}" from memory?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('删除记忆', `确定要删除记忆项「${key}」吗？`, [
+      { text: '取消', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: '删除', style: 'destructive', onPress: async () => {
           await deleteMemoryEntry(key);
           const updated = await loadMemory();
           setMemory(updated);
@@ -62,10 +62,10 @@ export default function MemoryScreen() {
   }, []);
 
   const handleClearAll = useCallback(() => {
-    Alert.alert('Clear All Memory', 'This will delete all stored memories. This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('清除全部记忆', '此操作将删除所有已保存的记忆，且无法恢复。', [
+      { text: '取消', style: 'cancel' },
       {
-        text: 'Clear All', style: 'destructive', onPress: async () => {
+        text: '全部清除', style: 'destructive', onPress: async () => {
           await clearMemory();
           setMemory({ entries: [], updatedAt: Date.now() });
         }
@@ -91,10 +91,10 @@ export default function MemoryScreen() {
     <ScreenContainer edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Memory</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>记忆</Text>
         {tab === 'memory' && memory.entries.length > 0 && (
           <Pressable onPress={handleClearAll} style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.6 }]}>
-            <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: '600' }}>Clear All</Text>
+            <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: '600' }}>清除全部</Text>
           </Pressable>
         )}
       </View>
@@ -104,7 +104,7 @@ export default function MemoryScreen() {
         {(['memory', 'profile'] as Tab[]).map((t) => (
           <Pressable key={t} style={[styles.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
             <Text style={[styles.tabText, { color: tab === t ? colors.primary : colors.muted }]}>
-              {t === 'memory' ? `Memory (${memory.entries.length})` : 'User Profile'}
+              {t === 'memory' ? `记忆 (${memory.entries.length})` : '用户资料'}
             </Text>
           </Pressable>
         ))}
@@ -118,15 +118,15 @@ export default function MemoryScreen() {
             onPress={() => { setEditEntry(null); setNewKey(''); setNewValue(''); setNewCategory('fact'); setShowAddModal(true); }}
           >
             <IconSymbol name="plus" size={18} color="#fff" />
-            <Text style={styles.addBtnText}>Add Memory</Text>
+            <Text style={styles.addBtnText}>添加记忆</Text>
           </Pressable>
 
           {memory.entries.length === 0 ? (
             <View style={styles.empty}>
               <IconSymbol name="brain" size={48} color={colors.border} />
-              <Text style={[styles.emptyTitle, { color: colors.muted }]}>No memories yet</Text>
+              <Text style={[styles.emptyTitle, { color: colors.muted }]}>暂无记忆</Text>
               <Text style={[styles.emptyDesc, { color: colors.muted }]}>
-                The AI can remember facts about you across conversations. Add memories manually or enable the Memory tool to let the AI save them automatically.
+                AI 可以在多次对话中记住您的个人信息。您可以手动添加记忆，或启用记忆工具让 AI 自动保存。
               </Text>
             </View>
           ) : (
@@ -141,11 +141,11 @@ export default function MemoryScreen() {
                 <View style={styles.entryActions}>
                   <Pressable onPress={() => handleEditEntry(entry)} style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.6 }]}>
                     <IconSymbol name="square.and.pencil" size={16} color={colors.primary} />
-                    <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
+                    <Text style={[styles.actionText, { color: colors.primary }]}>编辑</Text>
                   </Pressable>
                   <Pressable onPress={() => handleDeleteEntry(entry.key)} style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.6 }]}>
                     <IconSymbol name="trash.fill" size={16} color="#ef4444" />
-                    <Text style={[styles.actionText, { color: '#ef4444' }]}>Delete</Text>
+                    <Text style={[styles.actionText, { color: '#ef4444' }]}>删除</Text>
                   </Pressable>
                 </View>
               </View>
@@ -155,12 +155,12 @@ export default function MemoryScreen() {
         </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={[styles.sectionLabel, { color: colors.muted }]}>BASIC INFO</Text>
+          <Text style={[styles.sectionLabel, { color: colors.muted }]}>基本信息</Text>
           {[
-            { label: 'Name', key: 'name', placeholder: 'Your name' },
-            { label: 'Occupation', key: 'occupation', placeholder: 'Your job or role' },
-            { label: 'Language', key: 'language', placeholder: 'Preferred language (e.g. Chinese)' },
-            { label: 'Timezone', key: 'timezone', placeholder: 'e.g. Asia/Shanghai' },
+            { label: '姓名', key: 'name', placeholder: '您的姓名' },
+            { label: '职业', key: 'occupation', placeholder: '您的工作或职位' },
+            { label: '语言', key: 'language', placeholder: '首选语言（如：中文）' },
+            { label: '时区', key: 'timezone', placeholder: '如：Asia/Shanghai' },
           ].map(({ label, key, placeholder }) => (
             <View key={key} style={[styles.fieldCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.fieldLabel, { color: colors.muted }]}>{label}</Text>
@@ -174,12 +174,12 @@ export default function MemoryScreen() {
             </View>
           ))}
 
-          <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>INTERESTS</Text>
+          <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>兴趣爱好</Text>
           <View style={[styles.fieldCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.fieldLabel, { color: colors.muted }]}>Interests (comma separated)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.muted }]}>兴趣爱好（逗号分隔）</Text>
             <TextInput
               style={[styles.fieldInput, { color: colors.foreground }]}
-              placeholder="e.g. coding, AI, music"
+              placeholder="如：编程、AI、音乐"
               placeholderTextColor={colors.muted}
               value={(profile.interests ?? []).join(', ')}
               onChangeText={(v) => handleSaveProfile({ interests: v.split(',').map((s) => s.trim()).filter(Boolean) })}
@@ -189,7 +189,7 @@ export default function MemoryScreen() {
           <View style={[styles.infoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <IconSymbol name="info.circle.fill" size={16} color={colors.muted} />
             <Text style={[styles.infoText, { color: colors.muted }]}>
-              Profile information is automatically injected into every conversation so the AI knows who you are.
+              用户资料信息会自动注入到每次对话中，让 AI 了解您的基本信息。
             </Text>
           </View>
           <View style={{ height: 32 }} />
@@ -201,23 +201,23 @@ export default function MemoryScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modal, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              {editEntry ? 'Edit Memory' : 'Add Memory'}
+              {editEntry ? '编辑记忆' : '添加记忆'}
             </Text>
 
-            <Text style={[styles.inputLabel, { color: colors.muted }]}>Key</Text>
+            <Text style={[styles.inputLabel, { color: colors.muted }]}>键名</Text>
             <TextInput
               style={[styles.modalInput, { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border }]}
-              placeholder="e.g. user_name, favorite_color"
+              placeholder="如：user_name、favorite_color"
               placeholderTextColor={colors.muted}
               value={newKey}
               onChangeText={setNewKey}
               editable={!editEntry}
             />
 
-            <Text style={[styles.inputLabel, { color: colors.muted }]}>Value</Text>
+            <Text style={[styles.inputLabel, { color: colors.muted }]}>内容</Text>
             <TextInput
               style={[styles.modalInput, styles.modalTextarea, { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border }]}
-              placeholder="The value to remember"
+              placeholder="要记忆的内容"
               placeholderTextColor={colors.muted}
               value={newValue}
               onChangeText={setNewValue}
@@ -225,7 +225,7 @@ export default function MemoryScreen() {
               numberOfLines={3}
             />
 
-            <Text style={[styles.inputLabel, { color: colors.muted }]}>Category</Text>
+            <Text style={[styles.inputLabel, { color: colors.muted }]}>分类</Text>
             <View style={styles.categoryRow}>
               {(['fact', 'preference', 'context', 'goal'] as MemoryEntry['category'][]).map((cat) => (
                 <Pressable
@@ -240,10 +240,10 @@ export default function MemoryScreen() {
 
             <View style={styles.modalActions}>
               <Pressable style={[styles.modalBtn, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => setShowAddModal(false)}>
-                <Text style={[styles.modalBtnText, { color: colors.muted }]}>Cancel</Text>
+                <Text style={[styles.modalBtnText, { color: colors.muted }]}>取消</Text>
               </Pressable>
               <Pressable style={[styles.modalBtn, { backgroundColor: colors.primary }]} onPress={handleSaveEntry}>
-                <Text style={[styles.modalBtnText, { color: '#fff' }]}>Save</Text>
+                <Text style={[styles.modalBtnText, { color: '#fff' }]}>保存</Text>
               </Pressable>
             </View>
           </View>
