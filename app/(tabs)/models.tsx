@@ -52,6 +52,9 @@ function getProvider(baseUrl: string): string {
 // ─── Fetch available models from /models endpoint ────────────────────────────
 
 async function fetchAvailableModels(baseUrl: string, apiKey: string): Promise<string[]> {
+  // AbortSignal.timeout is not available in React Native / Hermes — use AbortController
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
     const url = baseUrl.replace(/\/$/, '') + '/models';
     const res = await fetch(url, {
@@ -59,8 +62,9 @@ async function fetchAvailableModels(baseUrl: string, apiKey: string): Promise<st
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(10000),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     // OpenAI-compatible format: { data: [{ id: '...' }] }
@@ -73,6 +77,8 @@ async function fetchAvailableModels(baseUrl: string, apiKey: string): Promise<st
     }
     return [];
   } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e?.name === 'AbortError') throw new Error('请求超时 (10s)');
     throw new Error(e.message || '获取失败');
   }
 }
@@ -404,14 +410,10 @@ export default function ModelsScreen() {
       Alert.alert('提示', '请先填写 API Key');
       return;
     }
-    // Auto-detect API type from baseUrl
-    // Note: if the URL ends with /openai/ it's OpenAI-compatible even for Google
-    let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
-    if (preset.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
-    else if (
-      (preset.baseUrl.includes('googleapis.com') || preset.baseUrl.includes('generativelanguage')) &&
-      !preset.baseUrl.includes('/openai')
-    ) apiType = 'google';
+    // Use preset.apiType if available; otherwise auto-detect from baseUrl
+    const apiType: 'openai' | 'anthropic' | 'google' = preset.apiType ?? (
+      preset.baseUrl.includes('anthropic.com') ? 'anthropic' : 'openai'
+    );
     setModelState(preset.model, { status: 'testing' });
     const result = await testModelConnection({ baseUrl: preset.baseUrl, apiKey: key, model: preset.model, apiType });
     setModelState(preset.model, { status: result.ok ? 'success' : 'error', result });
@@ -472,12 +474,9 @@ export default function ModelsScreen() {
       const batch = allPresets.slice(i, i + BATCH);
       batch.forEach((p) => setModelState(p.model, { status: 'testing' }));
       await Promise.all(batch.map(async (p) => {
-        let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
-        if (p.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
-        else if (
-          (p.baseUrl.includes('googleapis.com') || p.baseUrl.includes('generativelanguage')) &&
-          !p.baseUrl.includes('/openai')
-        ) apiType = 'google';
+        const apiType: 'openai' | 'anthropic' | 'google' = p.apiType ?? (
+          p.baseUrl.includes('anthropic.com') ? 'anthropic' : 'openai'
+        );
         const result = await testModelConnection({ baseUrl: p.baseUrl, apiKey: key, model: p.model, apiType });
         setModelState(p.model, { status: result.ok ? 'success' : 'error', result });
       }));
@@ -486,7 +485,11 @@ export default function ModelsScreen() {
   }, [testApiKey, state.modelConfig.apiKey, isTestingAll, allPresets, setModelState]);
 
   const handleUseModel = useCallback((preset: ModelPreset) => {
-    updateModelConfig({ ...state.modelConfig, baseUrl: preset.baseUrl, model: preset.model });
+    updateModelConfig({
+      ...state.modelConfig,
+      baseUrl: preset.baseUrl,
+      model: preset.model,
+    });
     Alert.alert('✅ 已切换', `当前模型: ${preset.name}`);
   }, [state.modelConfig, updateModelConfig]);
 

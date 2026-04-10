@@ -3,159 +3,202 @@ export interface ModelPreset {
   baseUrl: string;
   model: string;
   description: string;
+  /** API 协议类型，默认 openai-compatible */
+  apiType?: 'openai' | 'anthropic' | 'google';
 }
 
 export const MODEL_PRESETS: ModelPreset[] = [
-  // EdgeFn (推荐)
+  // ── OpenRouter (聚合平台，推荐) ──────────────────────────────────────────────
   {
-    name: 'EdgeFn (Hermes)',
-    baseUrl: 'https://api.edgefn.net/v1',
-    model: 'nousresearch/hermes-3-llama-3.1-405b',
-    description: 'Nous Research Hermes 3 via EdgeFn',
-  },
-
-  // OpenAI
-  {
-    name: 'OpenAI GPT-4o',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4o',
-    description: 'OpenAI GPT-4 Omni',
+    name: 'OpenRouter Auto',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'auto',
+    description: 'OpenRouter 自动路由',
+    apiType: 'openai',
   },
   {
-    name: 'OpenAI GPT-4 Turbo',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4-turbo',
-    description: 'OpenAI GPT-4 Turbo',
+    name: 'DeepSeek R1 (Free)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'deepseek/deepseek-r1:free',
+    description: 'DeepSeek R1 免费版 via OpenRouter',
+    apiType: 'openai',
   },
   {
-    name: 'OpenAI GPT-3.5 Turbo',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-3.5-turbo',
-    description: 'OpenAI GPT-3.5 Turbo',
-  },
-
-  // Anthropic Claude
-  {
-    name: 'Claude 3.5 Sonnet',
-    baseUrl: 'https://api.anthropic.com/v1',
-    model: 'claude-3-5-sonnet-20241022',
-    description: 'Anthropic Claude 3.5 Sonnet',
+    name: 'Gemini 2.5 Flash (Free)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'google/gemini-2.5-flash-preview:thinking',
+    description: 'Gemini 2.5 Flash 免费版 via OpenRouter',
+    apiType: 'openai',
   },
   {
-    name: 'Claude 3 Opus',
-    baseUrl: 'https://api.anthropic.com/v1',
-    model: 'claude-3-opus-20240229',
-    description: 'Anthropic Claude 3 Opus',
-  },
-
-  // Google Gemini
-  {
-    name: 'Gemini 2.0 Flash',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    model: 'gemini-2.0-flash',
-    description: 'Google Gemini 2.0 Flash',
+    name: 'Claude Sonnet 4 (OpenRouter)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'anthropic/claude-sonnet-4',
+    description: 'Claude Sonnet 4 via OpenRouter',
+    apiType: 'openai',
   },
   {
-    name: 'Gemini 1.5 Pro',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    model: 'gemini-1.5-pro',
-    description: 'Google Gemini 1.5 Pro',
+    name: 'GPT-4.1 (OpenRouter)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'openai/gpt-4.1',
+    description: 'GPT-4.1 via OpenRouter',
+    apiType: 'openai',
   },
-
-  // Mistral
-  {
-    name: 'Mistral Large',
-    baseUrl: 'https://api.mistral.ai/v1',
-    model: 'mistral-large-latest',
-    description: 'Mistral Large',
-  },
-  {
-    name: 'Mistral Medium',
-    baseUrl: 'https://api.mistral.ai/v1',
-    model: 'mistral-medium-latest',
-    description: 'Mistral Medium',
-  },
-
-  // Nous Research (via OpenRouter)
   {
     name: 'Nous Hermes 3 (OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'nousresearch/hermes-3-llama-3.1-405b',
-    description: 'Nous Research Hermes 3 via OpenRouter',
+    description: 'Nous Hermes 3 via OpenRouter',
+    apiType: 'openai',
   },
-  {
-    name: 'Nous Hermes 2 (OpenRouter)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'nousresearch/nous-hermes-2-mixtral-8x7b-dpo',
-    description: 'Nous Research Hermes 2 Mixtral via OpenRouter',
-  },
-
-  // Meta Llama (via OpenRouter)
   {
     name: 'Llama 3.1 405B (OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'meta-llama/llama-3.1-405b-instruct',
     description: 'Meta Llama 3.1 405B via OpenRouter',
-  },
-  {
-    name: 'Llama 3.1 70B (OpenRouter)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'meta-llama/llama-3.1-70b-instruct',
-    description: 'Meta Llama 3.1 70B via OpenRouter',
+    apiType: 'openai',
   },
 
-  // Qwen (via OpenRouter)
+  // ── OpenAI ───────────────────────────────────────────────────────────────────
   {
-    name: 'Qwen 2 72B (OpenRouter)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'qwen/qwen-2-72b-instruct',
-    description: 'Alibaba Qwen 2 72B via OpenRouter',
+    name: 'GPT-4.1',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4.1',
+    description: 'OpenAI GPT-4.1',
+    apiType: 'openai',
+  },
+  {
+    name: 'GPT-4.1 Mini',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4.1-mini',
+    description: 'OpenAI GPT-4.1 Mini',
+    apiType: 'openai',
+  },
+  {
+    name: 'GPT-4o',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o',
+    description: 'OpenAI GPT-4 Omni',
+    apiType: 'openai',
+  },
+  {
+    name: 'o4 Mini',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'o4-mini',
+    description: 'OpenAI o4 Mini (推理)',
+    apiType: 'openai',
   },
 
-  // DeepSeek (via OpenRouter)
+  // ── Anthropic Claude ─────────────────────────────────────────────────────────
   {
-    name: 'DeepSeek V3 (OpenRouter)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'deepseek/deepseek-chat',
-    description: 'DeepSeek V3 via OpenRouter',
+    name: 'Claude Sonnet 4.6',
+    baseUrl: 'https://api.anthropic.com/v1',
+    model: 'claude-sonnet-4-6',
+    description: 'Anthropic Claude Sonnet 4.6',
+    apiType: 'anthropic',
+  },
+  {
+    name: 'Claude Haiku 4.5',
+    baseUrl: 'https://api.anthropic.com/v1',
+    model: 'claude-haiku-4-5',
+    description: 'Anthropic Claude Haiku 4.5',
+    apiType: 'anthropic',
+  },
+  {
+    name: 'Claude 3.5 Sonnet',
+    baseUrl: 'https://api.anthropic.com/v1',
+    model: 'claude-3-5-sonnet-20241022',
+    description: 'Anthropic Claude 3.5 Sonnet',
+    apiType: 'anthropic',
   },
 
-  // Groq
+  // ── Google Gemini (OpenAI-compat endpoint) ───────────────────────────────────
   {
-    name: 'Mixtral 8x7B (Groq)',
+    name: 'Gemini 2.5 Flash',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-2.5-flash-preview-04-17',
+    description: 'Google Gemini 2.5 Flash (OpenAI 兼容)',
+    apiType: 'openai',
+  },
+  {
+    name: 'Gemini 2.5 Pro',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-2.5-pro-preview-03-25',
+    description: 'Google Gemini 2.5 Pro (OpenAI 兼容)',
+    apiType: 'openai',
+  },
+  {
+    name: 'Gemini 2.0 Flash',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-2.0-flash',
+    description: 'Google Gemini 2.0 Flash (OpenAI 兼容)',
+    apiType: 'openai',
+  },
+
+  // ── DeepSeek ─────────────────────────────────────────────────────────────────
+  {
+    name: 'DeepSeek V3',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+    description: 'DeepSeek V3',
+    apiType: 'openai',
+  },
+  {
+    name: 'DeepSeek R1',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-reasoner',
+    description: 'DeepSeek R1 (推理)',
+    apiType: 'openai',
+  },
+
+  // ── xAI Grok ─────────────────────────────────────────────────────────────────
+  {
+    name: 'Grok 3',
+    baseUrl: 'https://api.x.ai/v1',
+    model: 'grok-3',
+    description: 'xAI Grok 3',
+    apiType: 'openai',
+  },
+  {
+    name: 'Grok 3 Mini',
+    baseUrl: 'https://api.x.ai/v1',
+    model: 'grok-3-mini',
+    description: 'xAI Grok 3 Mini (推理)',
+    apiType: 'openai',
+  },
+
+  // ── Mistral ──────────────────────────────────────────────────────────────────
+  {
+    name: 'Mistral Large',
+    baseUrl: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-latest',
+    description: 'Mistral Large',
+    apiType: 'openai',
+  },
+
+  // ── Groq ─────────────────────────────────────────────────────────────────────
+  {
+    name: 'Llama 3.3 70B (Groq)',
     baseUrl: 'https://api.groq.com/openai/v1',
-    model: 'mixtral-8x7b-32768',
-    description: 'Mixtral 8x7B via Groq',
+    model: 'llama-3.3-70b-versatile',
+    description: 'Llama 3.3 70B via Groq',
+    apiType: 'openai',
   },
   {
-    name: 'Llama 3 70B (Groq)',
+    name: 'DeepSeek R1 (Groq)',
     baseUrl: 'https://api.groq.com/openai/v1',
-    model: 'llama-3-70b-8192',
-    description: 'Llama 3 70B via Groq',
+    model: 'deepseek-r1-distill-llama-70b',
+    description: 'DeepSeek R1 Distill via Groq',
+    apiType: 'openai',
   },
 
-  // Together AI
-  {
-    name: 'Llama 2 70B (Together)',
-    baseUrl: 'https://api.together.xyz/v1',
-    model: 'meta-llama/Llama-2-70b-chat-hf',
-    description: 'Meta Llama 2 70B via Together AI',
-  },
-
-  // Replicate
-  {
-    name: 'Llama 2 70B (Replicate)',
-    baseUrl: 'https://api.replicate.com/v1',
-    model: 'meta/llama-2-70b-chat',
-    description: 'Meta Llama 2 70B via Replicate',
-  },
-
-  // Local Ollama
+  // ── Local Ollama ─────────────────────────────────────────────────────────────
   {
     name: 'Local Ollama',
     baseUrl: 'http://localhost:11434/v1',
-    model: 'llama2',
-    description: 'Local Ollama instance',
+    model: 'llama3',
+    description: '本地 Ollama 实例',
+    apiType: 'openai',
   },
 ];
 

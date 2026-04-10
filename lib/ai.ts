@@ -10,12 +10,27 @@ export interface ModelTestResult {
   preview?: string;
 }
 
+// ─── Polyfill: AbortSignal.timeout is not available in React Native / Hermes ──
+
+function makeTimeoutSignal(ms: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(id),
+  };
+}
+
+// ─── Test model connection ────────────────────────────────────────────────────
+
 export async function testModelConnection(
   config: Pick<ModelConfig, 'baseUrl' | 'apiKey' | 'model'> & { apiType?: 'openai' | 'anthropic' | 'google' }
 ): Promise<ModelTestResult> {
   const baseUrl = config.baseUrl.replace(/\/$/, '');
   const apiType = config.apiType ?? 'openai';
   const start = Date.now();
+  const { signal, clear } = makeTimeoutSignal(15000);
+
   try {
     let url: string;
     let headers: Record<string, string>;
@@ -34,7 +49,7 @@ export async function testModelConnection(
         messages: [{ role: 'user', content: 'Hi' }],
       };
     } else if (apiType === 'google') {
-      // Google Gemini via generateContent
+      // Google Gemini via generateContent (native API, not OpenAI-compat)
       const modelPath = config.model.startsWith('models/') ? config.model : `models/${config.model}`;
       url = `${baseUrl}/${modelPath}:generateContent?key=${config.apiKey}`;
       headers = { 'Content-Type': 'application/json' };
@@ -45,7 +60,7 @@ export async function testModelConnection(
       headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
-        'HTTP-Referer': 'https://hermes-agent.nousresearch.com',
+        'HTTP-Referer': 'https://cortex-agent.app',
         'X-Title': 'Cortex',
       };
       body = {
@@ -60,10 +75,12 @@ export async function testModelConnection(
       method: 'POST',
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal,
     });
 
+    clear();
     const latencyMs = Date.now() - start;
+
     if (!response.ok) {
       let errBody = '';
       try { errBody = await response.text(); } catch { /* ignore */ }
@@ -77,7 +94,6 @@ export async function testModelConnection(
     }
 
     const json = await response.json();
-    // Parse preview from different API response formats
     let preview = '';
     if (apiType === 'anthropic') {
       preview = (json?.content?.[0]?.text ?? '').slice(0, 40);
@@ -86,12 +102,13 @@ export async function testModelConnection(
     } else {
       preview = (json?.choices?.[0]?.message?.content ?? '').slice(0, 40);
     }
-    return { ok: true, latencyMs, message: 'Connected', preview };
+    return { ok: true, latencyMs, message: '连接成功', preview };
   } catch (err: unknown) {
+    clear();
     const latencyMs = Date.now() - start;
     if (err instanceof Error) {
-      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-        return { ok: false, latencyMs, message: 'Timeout (15s)' };
+      if (err.name === 'AbortError') {
+        return { ok: false, latencyMs, message: '连接超时 (15s)' };
       }
       return { ok: false, latencyMs, message: err.message };
     }
@@ -135,7 +152,7 @@ async function chatOnce(
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${config.apiKey}`,
-      'HTTP-Referer': 'https://hermes-agent.nousresearch.com',
+      'HTTP-Referer': 'https://cortex-agent.app',
       'X-Title': 'Cortex',
     },
     body: JSON.stringify(body),
@@ -240,7 +257,7 @@ export function streamChat(
         }
 
         // Max iterations reached
-        callbacks.onChunk('\n\n[Max tool iterations reached]');
+        callbacks.onChunk('\n\n[已达最大工具调用次数]');
         callbacks.onDone();
         return;
       }
@@ -252,7 +269,7 @@ export function streamChat(
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${config.apiKey}`,
-          'HTTP-Referer': 'https://hermes-agent.nousresearch.com',
+          'HTTP-Referer': 'https://cortex-agent.app',
           'X-Title': 'Cortex',
         },
         body: JSON.stringify({
