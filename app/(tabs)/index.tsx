@@ -12,6 +12,8 @@ import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { streamChat } from '@/lib/ai';
 import { Message } from '@/lib/types';
+import { Toolset } from '@/lib/tools/types';
+import { loadToolsets } from '@/lib/tools/storage';
 import { sendTelegram, sendHomeAssistant } from '@/lib/gateway';
 
 export default function ChatScreen() {
@@ -26,6 +28,12 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [toolsets, setToolsets] = useState<Toolset[]>([]);
+
+  // Load toolsets on mount
+  useEffect(() => {
+    loadToolsets().then(setToolsets).catch(() => setToolsets([]));
+  }, []);
 
   // Auto-create a conversation on first load
   useEffect(() => {
@@ -78,46 +86,51 @@ export default function ChatScreen() {
     const allMessages = [...activeConversation.messages, userMsg];
     let fullContent = '';
 
-    const controller = streamChat(allMessages, modelConfig, {
-      onChunk: (chunk) => {
-        fullContent += chunk;
-        updateLastMessage(activeConversation.id, fullContent, true);
-        scrollToBottom();
-      },
-      onDone: async () => {
-        updateLastMessage(activeConversation.id, fullContent, false);
-        setIsStreaming(false);
+    const controller = streamChat(
+      allMessages,
+      modelConfig,
+      {
+        onChunk: (chunk) => {
+          fullContent += chunk;
+          updateLastMessage(activeConversation.id, fullContent, true);
+          scrollToBottom();
+        },
+        onDone: async () => {
+          updateLastMessage(activeConversation.id, fullContent, false);
+          setIsStreaming(false);
 
-        // Push to gateways if enabled
-        try {
-          if (gatewayConfig.telegram.enabled && gatewayConfig.telegram.botToken && gatewayConfig.telegram.chatId) {
-            await sendTelegram(
-              gatewayConfig.telegram.botToken,
-              gatewayConfig.telegram.chatId,
-              fullContent
-            );
+          // Push to gateways if enabled
+          try {
+            if (gatewayConfig.telegram.enabled && gatewayConfig.telegram.botToken && gatewayConfig.telegram.chatId) {
+              await sendTelegram(
+                gatewayConfig.telegram.botToken,
+                gatewayConfig.telegram.chatId,
+                fullContent
+              );
+            }
+            if (gatewayConfig.homeAssistant.enabled && gatewayConfig.homeAssistant.token) {
+              await sendHomeAssistant(
+                gatewayConfig.homeAssistant.url,
+                gatewayConfig.homeAssistant.token,
+                gatewayConfig.homeAssistant.notifyService,
+                fullContent.slice(0, 2000),
+                'Cortex'
+              );
+            }
+          } catch (e) {
+            console.warn('Gateway push failed:', e);
           }
-          if (gatewayConfig.homeAssistant.enabled && gatewayConfig.homeAssistant.token) {
-            await sendHomeAssistant(
-              gatewayConfig.homeAssistant.url,
-              gatewayConfig.homeAssistant.token,
-              gatewayConfig.homeAssistant.notifyService,
-              fullContent.slice(0, 2000),
-              'Cortex'
-            );
-          }
-        } catch (e) {
-          console.warn('Gateway push failed:', e);
-        }
+        },
+        onError: (err) => {
+          updateLastMessage(activeConversation.id, `Error: ${err.message}`, false);
+          setIsStreaming(false);
+        },
       },
-      onError: (err) => {
-        updateLastMessage(activeConversation.id, `Error: ${err.message}`, false);
-        setIsStreaming(false);
-      },
-    });
+      toolsets.length > 0 ? toolsets : undefined
+    );
 
     abortRef.current = controller;
-  }, [activeConversation, state, addMessage, updateLastMessage, scrollToBottom, router, t]);
+  }, [activeConversation, state, toolsets, addMessage, updateLastMessage, scrollToBottom, router, t]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
