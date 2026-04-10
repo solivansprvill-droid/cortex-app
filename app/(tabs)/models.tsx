@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, Pressable, StyleSheet,
   ActivityIndicator, TextInput, Alert, Modal,
@@ -309,6 +309,17 @@ export default function ModelsScreen() {
   const [testApiType, setTestApiType] = useState<ApiType>('openai');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Sync from context once loaded (SecureStore apiKey is async)
+  useEffect(() => {
+    if (state.isLoaded && !hasInitialized) {
+      setTestApiKey(state.modelConfig.apiKey);
+      setTestBaseUrl(state.modelConfig.baseUrl);
+      setTestModelId(state.modelConfig.model);
+      setHasInitialized(true);
+    }
+  }, [state.isLoaded, state.modelConfig, hasInitialized]);
 
   // ── Model list ──
   const [customModels, setCustomModels] = useState<ModelPreset[]>([]);
@@ -393,8 +404,12 @@ export default function ModelsScreen() {
       Alert.alert('提示', '请先填写 API Key');
       return;
     }
+    // Auto-detect API type from baseUrl
+    let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
+    if (preset.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
+    else if (preset.baseUrl.includes('googleapis.com') || preset.baseUrl.includes('generativelanguage')) apiType = 'google';
     setModelState(preset.model, { status: 'testing' });
-    const result = await testModelConnection({ baseUrl: preset.baseUrl, apiKey: key, model: preset.model });
+    const result = await testModelConnection({ baseUrl: preset.baseUrl, apiKey: key, model: preset.model, apiType });
     setModelState(preset.model, { status: result.ok ? 'success' : 'error', result });
   }, [testApiKey, state.modelConfig.apiKey, setModelState]);
 
@@ -409,7 +424,7 @@ export default function ModelsScreen() {
     }
     const tempKey = `__custom__${model}`;
     setModelState(tempKey, { status: 'testing' });
-    const result = await testModelConnection({ baseUrl: url, apiKey: key, model });
+    const result = await testModelConnection({ baseUrl: url, apiKey: key, model, apiType: testApiType });
     setModelState(tempKey, { status: result.ok ? 'success' : 'error', result });
     Alert.alert(
       result.ok ? '✅ 连接成功' : '❌ 连接失败',
@@ -453,7 +468,10 @@ export default function ModelsScreen() {
       const batch = allPresets.slice(i, i + BATCH);
       batch.forEach((p) => setModelState(p.model, { status: 'testing' }));
       await Promise.all(batch.map(async (p) => {
-        const result = await testModelConnection({ baseUrl: p.baseUrl, apiKey: key, model: p.model });
+        let apiType: 'openai' | 'anthropic' | 'google' = 'openai';
+        if (p.baseUrl.includes('anthropic.com')) apiType = 'anthropic';
+        else if (p.baseUrl.includes('googleapis.com') || p.baseUrl.includes('generativelanguage')) apiType = 'google';
+        const result = await testModelConnection({ baseUrl: p.baseUrl, apiKey: key, model: p.model, apiType });
         setModelState(p.model, { status: result.ok ? 'success' : 'error', result });
       }));
     }
