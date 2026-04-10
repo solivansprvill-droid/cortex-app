@@ -53,7 +53,7 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   apiKey: '',
   model: 'nousresearch/hermes-3-llama-3.1-405b',
   temperature: 0.7,
-  maxTokens: 2048,
+  maxTokens: 8192,
   systemPrompt:
     'You are Cortex, a helpful and intelligent AI assistant. You are knowledgeable, thoughtful, and precise. Help users with their questions and tasks.',
 };

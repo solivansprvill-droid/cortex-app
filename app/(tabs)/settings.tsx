@@ -224,11 +224,12 @@ export default function SettingsScreen() {
         <SliderRow
           label={t('settings.maxTokens')}
           value={model.maxTokens}
-          min={100} max={8192} step={128}
+          min={100} max={1000000} step={128}
           onChangeText={(v) => {
             const n = parseInt(v, 10);
-            if (!isNaN(n) && n >= 100 && n <= 8192) setModel((m) => ({ ...m, maxTokens: n }));
+            if (!isNaN(n) && n >= 100) setModel((m) => ({ ...m, maxTokens: n }));
           }}
+          unit=" tokens"
         />
 
         <TextRow
