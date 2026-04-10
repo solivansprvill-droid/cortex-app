@@ -47,6 +47,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="models"
+        options={{
+          title: "Models",
+          tabBarIcon: ({ color }) => <IconSymbol size={24} name="cpu" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

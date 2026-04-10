@@ -86,6 +86,24 @@
     "version": "Version",
     "poweredBy": "Powered by Nous Research Hermes"
   },
+  "models": {
+    "title": "Model Test",
+    "apiKeyLabel": "API Key",
+    "apiKeyHint": "Used for testing only, won't change saved config",
+    "apiKeyNote": "Leave blank to use the API key saved in Settings. Different providers require their own keys.",
+    "testAll": "Test All {{count}} Models",
+    "testing": "Testing...",
+    "testOne": "Test Connection",
+    "useModel": "Use This Model",
+    "current": "Current",
+    "notTested": "Not Tested",
+    "success": "Success",
+    "failed": "Failed",
+    "searchPlaceholder": "Search model name...",
+    "filterAll": "All",
+    "noResults": "No matching models",
+    "replyPreview": "Reply preview"
+  },
   "language": {
     "auto": "Follow System",
     "en": "English",

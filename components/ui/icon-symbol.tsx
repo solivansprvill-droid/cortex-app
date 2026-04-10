@@ -36,6 +36,18 @@ const MAPPING: IconMapping = {
   "chevron.up": "expand-less",
   "arrow.left": "arrow-back",
   "ellipsis": "more-horiz",
+  "cpu": "memory",
+  "bolt.fill": "bolt",
+  "wifi": "wifi",
+  "wifi.slash": "wifi-off",
+  "antenna.radiowaves.left.and.right": "router",
+  "play.fill": "play-arrow",
+  "play.circle.fill": "play-circle",
+  "arrow.clockwise": "refresh",
+  "checkmark.circle.fill": "check-circle",
+  "xmark.circle.fill": "cancel",
+  "clock.badge.questionmark": "schedule",
+  "minus.circle": "remove-circle-outline",
 };
 
 export function IconSymbol({

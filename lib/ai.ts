@@ -1,5 +1,70 @@
 import { Message, ModelConfig } from './types';
 
+export interface ModelTestResult {
+  ok: boolean;
+  latencyMs?: number;
+  message: string;
+  /** First few chars of the model's reply, confirming it actually responded */
+  preview?: string;
+}
+
+/**
+ * Send a minimal chat request to test whether the model endpoint is reachable
+ * and the API key is valid. Returns latency and a short preview of the reply.
+ */
+export async function testModelConnection(
+  config: Pick<ModelConfig, 'baseUrl' | 'apiKey' | 'model'>
+): Promise<ModelTestResult> {
+  const baseUrl = config.baseUrl.replace(/\/$/, '');
+  const start = Date.now();
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+        'HTTP-Referer': 'https://hermes-agent.nousresearch.com',
+        'X-Title': 'Cortex',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: 'Hi' }],
+        max_tokens: 16,
+        stream: false,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    const latencyMs = Date.now() - start;
+
+    if (!response.ok) {
+      let errBody = '';
+      try { errBody = await response.text(); } catch { /* ignore */ }
+      // Try to extract a clean error message from JSON
+      try {
+        const j = JSON.parse(errBody);
+        const msg = j?.error?.message ?? j?.message ?? errBody;
+        return { ok: false, latencyMs, message: `HTTP ${response.status}: ${msg}` };
+      } catch {
+        return { ok: false, latencyMs, message: `HTTP ${response.status}: ${errBody.slice(0, 120)}` };
+      }
+    }
+
+    const json = await response.json();
+    const preview = (json?.choices?.[0]?.message?.content ?? '').slice(0, 40);
+    return { ok: true, latencyMs, message: 'Connected', preview };
+  } catch (err: unknown) {
+    const latencyMs = Date.now() - start;
+    if (err instanceof Error) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        return { ok: false, latencyMs, message: 'Timeout (15s)' };
+      }
+      return { ok: false, latencyMs, message: err.message };
+    }
+    return { ok: false, latencyMs, message: String(err) };
+  }
+}
+
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
   onDone: () => void;
